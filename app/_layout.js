@@ -14,6 +14,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { DictionaryProvider, useDictionary } from '../context/DictionaryContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
+import { AlertProvider, useAppAlert } from '../context/AlertContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 import AppSplash from '../components/AppSplash';
@@ -22,6 +23,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function CustomDrawerContent(props) {
   const router = useRouter();
+  const { showAlert } = useAppAlert();
   const { searchHistory, searchWord, loading, wordData, removeFromHistory } = useDictionary();
   const { colors } = useTheme();
   const { scale, drawerWidth } = useResponsive();
@@ -34,7 +36,15 @@ function CustomDrawerContent(props) {
   };
 
   const handleRemoveHistory = (word) => {
-    removeFromHistory(word);
+    showAlert(
+      'Remove from history',
+      `Remove "${word}" from your search history?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeFromHistory(word) },
+      ],
+      { icon: 'close-circle-outline', variant: 'danger' }
+    );
   };
 
   const activeWord = wordData?.word?.toLowerCase();
@@ -202,9 +212,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <ThemeProvider>
-        <DictionaryProvider>
-          <RootLayoutNav />
-        </DictionaryProvider>
+        <AlertProvider>
+          <DictionaryProvider>
+            <RootLayoutNav />
+          </DictionaryProvider>
+        </AlertProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

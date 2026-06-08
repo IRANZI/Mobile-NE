@@ -3,7 +3,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -13,11 +12,13 @@ import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { getAudioPhonetics } from '../services/dictionaryApi';
 import { useTheme } from '../context/ThemeContext';
+import { useAppAlert } from '../context/AlertContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 export default function PronunciationPlayer({ phonetics, wordKey }) {
   const { colors } = useTheme();
+  const { showAlert } = useAppAlert();
   const { scale, isSmall } = useResponsive();
   const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
 
@@ -86,7 +87,12 @@ export default function PronunciationPlayer({ phonetics, wordKey }) {
       setPlaybackState('playing');
     } catch {
       setPlaybackState('idle');
-      Alert.alert('Audio Unavailable', 'Pronunciation could not be played. Try again later.');
+      showAlert(
+        'Audio unavailable',
+        'Pronunciation could not be played. Check your connection and try again.',
+        [{ text: 'OK', style: 'default' }],
+        { icon: 'volume-mute-outline', variant: 'info' }
+      );
     }
   };
 

@@ -2,7 +2,6 @@
 
 import React, { useMemo } from 'react';
 import {
-  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDictionary } from '../context/DictionaryContext';
+import { useAppAlert } from '../context/AlertContext';
 import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
@@ -21,6 +21,7 @@ export default function HistoryScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { showAlert } = useAppAlert();
   const { searchHistory, wordCache, searchWord, clearHistory, removeFromHistory, loading } =
     useDictionary();
   const { scale } = useResponsive();
@@ -30,17 +31,14 @@ export default function HistoryScreen() {
   const handleClearHistory = () => {
     if (searchHistory.length === 0) return;
 
-    Alert.alert(
-      'Clear History',
+    showAlert(
+      'Clear history',
       'Remove all searched words from your history? This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: clearHistory,
-        },
-      ]
+        { text: 'Clear all', style: 'destructive', onPress: clearHistory },
+      ],
+      { icon: 'trash-outline', variant: 'danger' }
     );
   };
 
@@ -50,17 +48,14 @@ export default function HistoryScreen() {
   };
 
   const handleRemoveWord = (word) => {
-    Alert.alert(
+    showAlert(
       'Remove from history',
       `Remove "${word}" from your search history?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => removeFromHistory(word),
-        },
-      ]
+        { text: 'Remove', style: 'destructive', onPress: () => removeFromHistory(word) },
+      ],
+      { icon: 'close-circle-outline', variant: 'danger' }
     );
   };
 
