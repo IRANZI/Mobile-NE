@@ -5,7 +5,7 @@
 
 import React, { useMemo } from 'react';
 import {
-  ActivityIndicator,
+  Image,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/colors';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
+
+const appIcon = require('../assets/icon.png');
 
 export default function SearchBar({
   value,
@@ -52,7 +54,7 @@ export default function SearchBar({
           activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator size="small" color={colors.secondary} />
+            <Image source={appIcon} style={styles.loadingIcon} resizeMode="contain" />
           ) : (
             <Ionicons name="arrow-forward-circle" size={scale(28)} color={colors.secondary} />
           )}
@@ -93,6 +95,11 @@ function createStyles(scale) {
     },
     searchBtn: {
       padding: scale(2),
+    },
+    loadingIcon: {
+      width: scale(28),
+      height: scale(28),
+      borderRadius: scale(6),
     },
   });
 }

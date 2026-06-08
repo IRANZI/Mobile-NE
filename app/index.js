@@ -7,7 +7,6 @@
 
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -24,6 +23,7 @@ import RecentWordsScroll from '../components/RecentWordsScroll';
 import WordHero from '../components/WordHero';
 import DefinitionCard from '../components/DefinitionCard';
 import ErrorMessage from '../components/ErrorMessage';
+import LoadingImage from '../components/LoadingImage';
 import { colors } from '../constants/colors';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
@@ -117,10 +117,7 @@ export default function SearchScreen() {
 
             {/* Loading spinner while fetching from API */}
             {loading ? (
-              <View style={styles.loadingBox}>
-                <ActivityIndicator size="large" color={colors.secondary} />
-                <Text style={styles.loadingText}>Searching dictionary...</Text>
-              </View>
+              <LoadingImage message="Searching dictionary..." />
             ) : null}
 
             {/* Error message (404, network, etc.) */}
@@ -176,17 +173,6 @@ function createStyles(scale, horizontalPad, contentMaxWidth) {
     sheetContent: {
       padding: scale(20),
       paddingTop: scale(24),
-    },
-    loadingBox: {
-      alignItems: 'center',
-      paddingVertical: scale(32),
-      gap: scale(12),
-    },
-    loadingText: {
-      fontFamily: fonts.sans,
-      fontSize: scale(15),
-      color: colors.textDark,
-      fontWeight: '600',
     },
     noMeanings: {
       fontFamily: fonts.sans,

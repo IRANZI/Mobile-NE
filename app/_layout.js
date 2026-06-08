@@ -3,7 +3,7 @@
 // Drawer links to Search and History pages (Android & iOS)
 // ============================================================
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   DrawerContentScrollView,
   DrawerItemList,
@@ -11,12 +11,17 @@ import {
 import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DictionaryProvider, useDictionary } from '../context/DictionaryContext';
 import { colors } from '../constants/colors';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
+import AppSplash from '../components/AppSplash';
+
+// Hide the default Expo splash so our custom icon screen shows instead
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 /**
  * Custom drawer — branding header + navigation links.
@@ -123,6 +128,22 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [appReady, setAppReady] = useState(false);
+
+  useEffect(() => {
+    async function prepare() {
+      // Hide native Expo splash, then show our assets/icon.png screen briefly
+      await SplashScreen.hideAsync();
+      setTimeout(() => setAppReady(true), 1200);
+    }
+
+    prepare();
+  }, []);
+
+  if (!appReady) {
+    return <AppSplash />;
+  }
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <DictionaryProvider>
