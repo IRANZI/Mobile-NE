@@ -1,23 +1,21 @@
-// ============================================================
-// Definition Card — white card in the bottom sheet (reference UI)
-// Orange context label, bold definition, example sentences
-// ============================================================
+// Definition Card
 
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 export default function DefinitionCard({ meaning, index }) {
+  const { colors } = useTheme();
   const { scale } = useResponsive();
-  const styles = useMemo(() => createStyles(scale), [scale]);
+  const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
 
   if (!meaning) return null;
 
   return (
     <View style={styles.card}>
-      {/* Orange context label — like "(BEI FREUNDEN USW.)" in reference */}
+      {/* Context label */}
       <Text style={styles.contextLabel}>
         ({meaning.partOfSpeech?.toUpperCase() || 'GENERAL'})
       </Text>
@@ -31,15 +29,15 @@ export default function DefinitionCard({ meaning, index }) {
               defIndex === meaning.definitions.length - 1 && styles.lastBlock,
             ]}
           >
-            {/* Main definition in bold */}
+            {/* Main definition  */}
             <Text style={styles.definition}>{def.definition}</Text>
 
-            {/* Example sentence in lighter grey italic */}
+            {/* Example sentence  */}
             {def.example ? (
               <Text style={styles.example}>"{def.example}"</Text>
             ) : null}
 
-            {/* Synonyms as small chips */}
+            {/* Synonyms  */}
             {def.synonyms?.length > 0 ? (
               <View style={styles.synonymsRow}>
                 {def.synonyms.slice(0, 4).map((syn, i) => (
@@ -58,7 +56,7 @@ export default function DefinitionCard({ meaning, index }) {
   );
 }
 
-function createStyles(scale) {
+function createStyles(scale, colors) {
   return StyleSheet.create({
     card: {
       backgroundColor: colors.cardBg,

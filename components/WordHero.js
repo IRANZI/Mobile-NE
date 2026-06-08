@@ -1,21 +1,19 @@
-// ============================================================
-// Word Hero — detail screen header (reference left phone)
-// Navy background, large serif word, star icon, phonetics, audio
-// ============================================================
-
+// Word Hero Component
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import PronunciationPlayer from './PronunciationPlayer';
 import GeometricBackground from './GeometricBackground';
+import ThemeToggle from './ThemeToggle';
 import { getAudioPhonetics } from '../services/dictionaryApi';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 export default function WordHero({ wordData, onBack }) {
+  const { colors } = useTheme();
   const { scale, heroWordSize } = useResponsive();
-  const styles = useMemo(() => createStyles(scale), [scale]);
+  const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
   const [isFavorite, setIsFavorite] = useState(false);
 
   if (!wordData) return null;
@@ -31,10 +29,13 @@ export default function WordHero({ wordData, onBack }) {
     <View style={styles.wrapper}>
       <GeometricBackground variant="detail" />
 
-      {/* Back button — returns to home screen */}
-      <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.8}>
-        <Ionicons name="chevron-back" size={scale(28)} color={colors.white} />
-      </TouchableOpacity>
+      {/* Top bar: back + theme toggle */}
+      <View style={styles.topRow}>
+        <TouchableOpacity style={styles.backBtn} onPress={onBack} activeOpacity={0.8}>
+          <Ionicons name="chevron-back" size={scale(28)} color={colors.heroText} />
+        </TouchableOpacity>
+        <ThemeToggle color={colors.heroText} />
+      </View>
 
       {/* Word row: large title + favorite star */}
       <View style={styles.wordRow}>
@@ -54,7 +55,7 @@ export default function WordHero({ wordData, onBack }) {
           <Ionicons
             name={isFavorite ? 'star' : 'star-outline'}
             size={scale(28)}
-            color={colors.yellow}
+            color={colors.heroStar}
           />
         </TouchableOpacity>
       </View>
@@ -75,20 +76,25 @@ export default function WordHero({ wordData, onBack }) {
   );
 }
 
-function createStyles(scale) {
+function createStyles(scale, colors) {
   return StyleSheet.create({
     wrapper: {
-      backgroundColor: colors.navy,
+      backgroundColor: colors.heroBg,
       paddingHorizontal: scale(20),
       paddingTop: scale(8),
       paddingBottom: scale(24),
       overflow: 'hidden',
       minHeight: scale(180),
     },
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: scale(8),
+    },
     backBtn: {
       alignSelf: 'flex-start',
       padding: scale(4),
-      marginBottom: scale(8),
     },
     wordRow: {
       flexDirection: 'row',
@@ -100,7 +106,7 @@ function createStyles(scale) {
       flex: 1,
       fontFamily: fonts.serif,
       fontWeight: '700',
-      color: colors.white,
+      color: colors.heroText,
       textTransform: 'capitalize',
     },
     starBtn: {
@@ -109,14 +115,14 @@ function createStyles(scale) {
     phoneticLine: {
       fontFamily: fonts.sans,
       fontSize: scale(15),
-      color: colors.textLight,
+      color: colors.heroSubtext,
       marginTop: scale(8),
       fontStyle: 'italic',
     },
     noAudio: {
       fontFamily: fonts.sans,
       fontSize: scale(12),
-      color: 'rgba(255,255,255,0.5)',
+      color: colors.heroMuted,
       marginTop: scale(8),
       fontStyle: 'italic',
     },

@@ -1,9 +1,4 @@
-// ============================================================
-// Main Search Screen — home view + word detail view
-// Home: header, search bar, recents
-// Detail: navy header with word + white definition sheet
-// Compatible with Android and iOS via React Native / Expo
-// ============================================================
+// SearchScreen.js - Main screen with search bar, recent words, and word details
 
 import React, { useMemo, useState } from 'react';
 import {
@@ -24,9 +19,10 @@ import WordHero from '../components/WordHero';
 import DefinitionCard from '../components/DefinitionCard';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingImage from '../components/LoadingImage';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
+import { validateSearchQuery } from '../utils/validateSearch';
 
 export default function SearchScreen() {
   const {
@@ -40,13 +36,15 @@ export default function SearchScreen() {
     clearWord,
   } = useDictionary();
 
+  const { colors } = useTheme();
   const [searchText, setSearchText] = useState('');
+  const [validationError, setValidationError] = useState(null);
   const insets = useSafeAreaInsets();
   const { scale, horizontalPad, contentMaxWidth } = useResponsive();
 
   const styles = useMemo(
-    () => createStyles(scale, horizontalPad, contentMaxWidth),
-    [scale, horizontalPad, contentMaxWidth]
+    () => createStyles(scale, horizontalPad, contentMaxWidth, colors),
+    [scale, horizontalPad, contentMaxWidth, colors]
   );
 
   // True when showing word detail (left phone in reference design)
@@ -55,11 +53,25 @@ export default function SearchScreen() {
   const handleSearch = () => {
     Keyboard.dismiss();
     clearError();
-    const query = searchText.trim();
-    if (!query) return;
-    searchWord(query);
+
+    const validation = validateSearchQuery(searchText);
+    if (!validation.valid) {
+      setValidationError(validation);
+      return;
+    }
+
+    setValidationError(null);
+    searchWord(validation.word);
     setSearchText('');
   };
+
+  const handleChangeText = (text) => {
+    setSearchText(text);
+    if (validationError) setValidationError(null);
+    if (error?.type === 'validation') clearError();
+  };
+
+  const apiError = error && error.type !== 'validation' ? error : null;
 
   return (
     <KeyboardAvoidingView
@@ -110,9 +122,10 @@ export default function SearchScreen() {
             {/* White search bar overlapping the header */}
             <SearchBar
               value={searchText}
-              onChangeText={setSearchText}
+              onChangeText={handleChangeText}
               onSubmit={handleSearch}
               loading={loading}
+              validationError={validationError}
             />
 
             {/* Loading spinner while fetching from API */}
@@ -121,7 +134,7 @@ export default function SearchScreen() {
             ) : null}
 
             {/* Error message (404, network, etc.) */}
-            {error ? <ErrorMessage message={error.message} /> : null}
+            {apiError ? <ErrorMessage error={apiError} /> : null}
 
             {/* Horizontal recent words scroll */}
             {!loading ? (
@@ -138,7 +151,7 @@ export default function SearchScreen() {
   );
 }
 
-function createStyles(scale, horizontalPad, contentMaxWidth) {
+function createStyles(scale, horizontalPad, contentMaxWidth, colors) {
   return StyleSheet.create({
     screen: {
       flex: 1,
@@ -164,9 +177,11 @@ function createStyles(scale, horizontalPad, contentMaxWidth) {
       borderTopRightRadius: scale(28),
       marginTop: scale(-12),
       overflow: 'hidden',
+      borderTopWidth: 1,
+      borderColor: colors.sheetBorder,
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: scale(-4) },
-      shadowOpacity: 0.15,
+      shadowOpacity: colors.sheetShadowOpacity,
       shadowRadius: scale(12),
       elevation: 10,
     },

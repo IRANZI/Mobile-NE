@@ -1,7 +1,4 @@
-// ============================================================
-// Root Layout — drawer navigator + global dictionary state
-// Drawer links to Search and History pages (Android & iOS)
-// ============================================================
+// Root layout with drawer navigation and custom styling
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -15,22 +12,18 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { DictionaryProvider, useDictionary } from '../context/DictionaryContext';
-import { colors } from '../constants/colors';
+import { ThemeProvider, useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 import AppSplash from '../components/AppSplash';
 
-// Hide the default Expo splash so our custom icon screen shows instead
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-/**
- * Custom drawer — branding header + navigation links.
- * Full history list lives on the dedicated History page.
- */
 function CustomDrawerContent(props) {
   const { searchHistory } = useDictionary();
+  const { colors } = useTheme();
   const { scale, drawerWidth } = useResponsive();
-  const styles = useMemo(() => createDrawerStyles(scale), [scale]);
+  const styles = useMemo(() => createDrawerStyles(scale, colors), [scale, colors]);
 
   return (
     <DrawerContentScrollView
@@ -41,7 +34,7 @@ function CustomDrawerContent(props) {
       <View style={styles.drawerHeader}>
         <View style={styles.accentDecor} />
         <View style={[styles.logoBox, { width: scale(48), height: scale(48) }]}>
-          <Ionicons name="book" size={scale(26)} color={colors.white} />
+          <Ionicons name="book" size={scale(26)} color={colors.iconOnPrimary} />
         </View>
         <Text style={styles.drawerTitle}>LexiTech</Text>
         <Text style={styles.drawerSubtitle}>Dictionary App</Text>
@@ -53,7 +46,6 @@ function CustomDrawerContent(props) {
         <DrawerItemList {...props} />
       </View>
 
-      {/* Quick history count — tap History in menu for full page */}
       <View style={styles.statsBox}>
         <Ionicons name="time-outline" size={scale(20)} color={colors.secondary} />
         <Text style={styles.statsText}>
@@ -65,42 +57,48 @@ function CustomDrawerContent(props) {
 }
 
 function RootLayoutNav() {
+  const { colors } = useTheme();
   const { scale, drawerWidth } = useResponsive();
+
+  const screenOptions = useMemo(
+    () => ({
+      drawerActiveTintColor: colors.iconOnPrimary,
+      drawerActiveBackgroundColor: colors.secondary + '33',
+      drawerInactiveTintColor: colors.drawerTextMuted,
+      drawerLabelStyle: {
+        fontFamily: fonts.sans,
+        fontSize: scale(15),
+        fontWeight: '600',
+        marginLeft: -8,
+      },
+      drawerStyle: {
+        backgroundColor: colors.drawerBackground,
+        width: drawerWidth,
+      },
+      headerStyle: {
+        backgroundColor: colors.navy,
+        elevation: 0,
+        shadowOpacity: 0,
+      },
+      headerTintColor: colors.heroText,
+      headerTitleStyle: {
+        fontFamily: fonts.sans,
+        fontWeight: '800',
+        fontSize: scale(18),
+      },
+      sceneContainerStyle: {
+        backgroundColor: colors.background,
+      },
+    }),
+    [colors, scale, drawerWidth]
+  );
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={colors.statusBar} />
       <Drawer
         drawerContent={(props) => <CustomDrawerContent {...props} />}
-        screenOptions={{
-          drawerActiveTintColor: colors.white,
-          drawerActiveBackgroundColor: colors.secondary + '33',
-          drawerInactiveTintColor: colors.drawerTextMuted,
-          drawerLabelStyle: {
-            fontFamily: fonts.sans,
-            fontSize: scale(15),
-            fontWeight: '600',
-            marginLeft: -8,
-          },
-          drawerStyle: {
-            backgroundColor: colors.drawerBackground,
-            width: drawerWidth,
-          },
-          headerStyle: {
-            backgroundColor: colors.navy,
-            elevation: 0,
-            shadowOpacity: 0,
-          },
-          headerTintColor: colors.white,
-          headerTitleStyle: {
-            fontFamily: fonts.sans,
-            fontWeight: '800',
-            fontSize: scale(18),
-          },
-          sceneContainerStyle: {
-            backgroundColor: colors.background,
-          },
-        }}
+        screenOptions={screenOptions}
       >
         <Drawer.Screen
           name="index"
@@ -132,7 +130,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     async function prepare() {
-      // Hide native Expo splash, then show our assets/icon.png screen briefly
       await SplashScreen.hideAsync();
       setTimeout(() => setAppReady(true), 1200);
     }
@@ -146,14 +143,16 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <DictionaryProvider>
-        <RootLayoutNav />
-      </DictionaryProvider>
+      <ThemeProvider>
+        <DictionaryProvider>
+          <RootLayoutNav />
+        </DictionaryProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
 
-function createDrawerStyles(scale) {
+function createDrawerStyles(scale, colors) {
   return StyleSheet.create({
     drawerContainer: { backgroundColor: colors.drawerBackground },
     drawerScroll: { flexGrow: 1, paddingBottom: scale(20) },

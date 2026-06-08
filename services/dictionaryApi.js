@@ -1,7 +1,4 @@
-// ============================================================
-// Dictionary API Service — HTTP requests to Free Dictionary API
-// Uses axios for GET requests; works on Android and iOS
-// ============================================================
+// Dictionary API Service
 
 import axios from 'axios';
 
@@ -24,7 +21,9 @@ export async function fetchWordDefinition(word) {
     if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
       throw {
         type: 'empty',
-        message: 'No definition data was returned. Please try another word.',
+        title: 'No results',
+        message: 'No definition was found for that word.',
+        hint: 'Try searching for a more common spelling.',
       };
     }
 
@@ -38,12 +37,16 @@ export async function fetchWordDefinition(word) {
       if (error.response.status === 404) {
         throw {
           type: 'not_found',
-          message: 'Word not found. Please check the spelling and try again.',
+          title: 'Word not found',
+          message: `"${word.trim()}" is not in the dictionary.`,
+          hint: 'Check the spelling or try a different word.',
         };
       }
       throw {
         type: 'server',
-        message: `Something went wrong (${error.response.status}). Please try again.`,
+        title: 'Server error',
+        message: 'The dictionary service is temporarily unavailable.',
+        hint: 'Please wait a moment and try again.',
       };
     }
 
@@ -51,14 +54,17 @@ export async function fetchWordDefinition(word) {
     if (error.request) {
       throw {
         type: 'network',
-        message: 'Network error. Check your internet connection and try again.',
+        title: 'No internet connection',
+        message: 'Unable to reach the dictionary.',
+        hint: 'Check your Wi‑Fi or mobile data and try again.',
       };
     }
 
-    // Any other unexpected error
     throw {
       type: 'unknown',
-      message: 'An unexpected error occurred. Please try again.',
+      title: 'Something went wrong',
+      message: 'An unexpected error occurred.',
+      hint: 'Please try again in a moment.',
     };
   }
 }

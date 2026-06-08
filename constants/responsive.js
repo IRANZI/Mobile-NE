@@ -1,7 +1,4 @@
-// ============================================================
-// Responsive scaling — adapts layout to phone & tablet sizes
-// Updates automatically when the screen rotates (Android/iOS)
-// ============================================================
+// Responsive Design Utilities
 
 import { useWindowDimensions } from 'react-native';
 
@@ -9,8 +6,8 @@ const BASE_WIDTH = 375;
 
 /**
  * Scale a pixel value based on current screen width.
- * @param {number} size - Base size designed for 375px width
- * @param {number} screenWidth - Current device width
+ * @param {number} size 
+ * @param {number} screenWidth 
  */
 export function scaleSize(size, screenWidth) {
   const ratio = screenWidth / BASE_WIDTH;
@@ -20,7 +17,7 @@ export function scaleSize(size, screenWidth) {
 
 /**
  * Hook that returns responsive layout values.
- * Use in any component: const { scale, isTablet } = useResponsive();
+ * Use in any component
  */
 export function useResponsive() {
   const { width, height } = useWindowDimensions();

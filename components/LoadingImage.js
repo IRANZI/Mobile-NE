@@ -1,19 +1,18 @@
-// ============================================================
-// Loading Image — shows the app icon while fetching data
-// Uses assets/icon.png with a gentle pulse animation
-// ============================================================
+
+// Loading Image  when searching for a word in the dictionary. 
 
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Image, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 const appIcon = require('../assets/icon.png');
 
 export default function LoadingImage({ message = 'Searching dictionary...' }) {
+  const { colors } = useTheme();
   const { scale } = useResponsive();
-  const styles = useMemo(() => createStyles(scale), [scale]);
+  const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
   const pulse = useRef(new Animated.Value(0.6)).current;
 
   // Soft pulse so the icon feels alive while loading
@@ -50,7 +49,7 @@ export default function LoadingImage({ message = 'Searching dictionary...' }) {
   );
 }
 
-function createStyles(scale) {
+function createStyles(scale, colors) {
   return StyleSheet.create({
     container: {
       alignItems: 'center',

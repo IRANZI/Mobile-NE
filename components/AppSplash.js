@@ -1,19 +1,18 @@
-// ============================================================
-// App Splash — launch screen using assets/icon.png
-// Shown on startup (works in Expo Go and native builds)
-// ============================================================
+// App Splash Screen — follows system theme before ThemeProvider loads
 
 import React, { useMemo } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/colors';
+import { Image, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { darkTheme, lightTheme } from '../constants/themes';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 const appIcon = require('../assets/icon.png');
 
 export default function AppSplash() {
+  const scheme = useColorScheme();
+  const colors = scheme === 'dark' ? darkTheme : lightTheme;
   const { scale } = useResponsive();
-  const styles = useMemo(() => createStyles(scale), [scale]);
+  const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
 
   return (
     <View style={styles.container}>
@@ -28,7 +27,7 @@ export default function AppSplash() {
   );
 }
 
-function createStyles(scale) {
+function createStyles(scale, colors) {
   return StyleSheet.create({
     container: {
       flex: 1,

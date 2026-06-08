@@ -1,8 +1,4 @@
-// ============================================================
-// Pronunciation Player — play, pause, stop audio controls
-// Speaker icon next to phonetics; hidden if no audio URL
-// Works on Android and iOS via expo-av
-// ============================================================
+// Pronunciation Player Component
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -16,13 +12,14 @@ import {
 import { Audio } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { getAudioPhonetics } from '../services/dictionaryApi';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 export default function PronunciationPlayer({ phonetics, wordKey }) {
+  const { colors } = useTheme();
   const { scale, isSmall } = useResponsive();
-  const styles = useMemo(() => createStyles(scale), [scale]);
+  const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
 
   const soundRef = useRef(null);
   const [playbackState, setPlaybackState] = useState('idle');
@@ -122,9 +119,9 @@ export default function PronunciationPlayer({ phonetics, wordKey }) {
           activeOpacity={0.8}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color={colors.white} />
+            <ActivityIndicator size="small" color={colors.iconOnPrimary} />
           ) : (
-            <Ionicons name="volume-high" size={scale(20)} color={colors.white} />
+            <Ionicons name="volume-high" size={scale(20)} color={colors.iconOnPrimary} />
           )}
         </TouchableOpacity>
 
@@ -135,7 +132,7 @@ export default function PronunciationPlayer({ phonetics, wordKey }) {
           disabled={!isPlaying}
           activeOpacity={0.8}
         >
-          <Ionicons name="pause" size={scale(18)} color={isPlaying ? colors.navy : 'rgba(255,255,255,0.4)'} />
+          <Ionicons name="pause" size={scale(18)} color={isPlaying ? colors.heroBg : colors.heroMuted} />
         </TouchableOpacity>
 
         {/* Stop button */}
@@ -145,7 +142,7 @@ export default function PronunciationPlayer({ phonetics, wordKey }) {
           disabled={!isActive}
           activeOpacity={0.8}
         >
-          <Ionicons name="stop" size={scale(18)} color={isActive ? colors.orange : 'rgba(255,255,255,0.4)'} />
+          <Ionicons name="stop" size={scale(18)} color={isActive ? colors.heroStar : colors.heroMuted} />
         </TouchableOpacity>
 
         {!isSmall ? (
@@ -181,7 +178,7 @@ export default function PronunciationPlayer({ phonetics, wordKey }) {
   );
 }
 
-function createStyles(scale) {
+function createStyles(scale, colors) {
   return StyleSheet.create({
     container: { marginTop: scale(14) },
     controlsRow: {
@@ -191,11 +188,11 @@ function createStyles(scale) {
       gap: scale(8),
     },
     btn: {
-      backgroundColor: 'rgba(255,255,255,0.2)',
+      backgroundColor: colors.heroControlBg,
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.3)',
+      borderColor: colors.heroControlBorder,
     },
     playBtn: { backgroundColor: colors.secondary, borderColor: colors.secondary },
     playActive: { backgroundColor: colors.success, borderColor: colors.success },
@@ -203,7 +200,7 @@ function createStyles(scale) {
     status: {
       fontFamily: fonts.sans,
       fontSize: scale(13),
-      color: colors.textLight,
+      color: colors.heroSubtext,
       fontWeight: '600',
       marginLeft: scale(4),
     },
@@ -217,9 +214,9 @@ function createStyles(scale) {
       paddingHorizontal: scale(12),
       paddingVertical: scale(5),
       borderRadius: scale(14),
-      backgroundColor: 'rgba(255,255,255,0.15)',
+      backgroundColor: colors.heroControlBg,
       borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.25)',
+      borderColor: colors.heroControlBorder,
     },
     accentActive: {
       backgroundColor: colors.secondary,
@@ -228,7 +225,7 @@ function createStyles(scale) {
     accentText: {
       fontFamily: fonts.sans,
       fontSize: scale(12),
-      color: colors.white,
+      color: colors.heroText,
       fontWeight: '600',
     },
   });

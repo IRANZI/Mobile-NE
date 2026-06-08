@@ -1,18 +1,13 @@
-// ============================================================
-// Dictionary Context — global state for the whole app
-// Manages search results, history, loading, and errors
-// ============================================================
+// Dictionary Context
 
 import React, { createContext, useCallback, useContext, useState } from 'react';
 import { fetchWordDefinition } from '../services/dictionaryApi';
+import { validateSearchQuery } from '../utils/validateSearch';
 
 // Create React Context to share data across all screens
 const DictionaryContext = createContext(null);
 
-/**
- * Wraps the app and provides dictionary state to all child components.
- * Must wrap the app in _layout.js.
- */
+// Provider component that wraps the app and makes dictionary state available to all child components
 export function DictionaryProvider({ children }) {
   // Current word being displayed on the detail screen
   const [wordData, setWordData] = useState(null);
@@ -22,10 +17,7 @@ export function DictionaryProvider({ children }) {
   const [error, setError] = useState(null);
   const [searchHistory, setSearchHistory] = useState([]);
 
-  /**
-   * Add a word to search history without duplicates.
-   * Most recent word appears first. Max 25 items.
-   */
+ // Add a word to the search history, ensuring no duplicates and max length of 25
   const addToHistory = useCallback((word) => {
     const trimmed = word.trim();
     if (!trimmed) return;
@@ -37,21 +29,22 @@ export function DictionaryProvider({ children }) {
     });
   }, []);
 
-  /**
-   * Search for a word via the API.
-   * Called from search bar, drawer history, and recent word cards.
-   */
+ // Search for a word using the dictionary API, update state with results, and handle loading/errors
   const searchWord = useCallback(
     async (word) => {
-      const trimmed = word.trim();
+      const validation = validateSearchQuery(word);
 
-      if (!trimmed) {
+      if (!validation.valid) {
         setError({
-          type: 'validation',
-          message: 'Please enter a word before searching.',
+          type: validation.type,
+          title: validation.title,
+          message: validation.message,
+          hint: validation.hint,
         });
-        return;
+        return { success: false, error: validation };
       }
+
+      const trimmed = validation.word;
 
       setLoading(true);
       setError(null);
@@ -59,12 +52,13 @@ export function DictionaryProvider({ children }) {
       try {
         const data = await fetchWordDefinition(trimmed);
         setWordData(data);
-        // Cache word data so recent cards can show phonetics/definitions
         setWordCache((prev) => ({ ...prev, [trimmed.toLowerCase()]: data }));
         addToHistory(trimmed);
+        return { success: true, data };
       } catch (err) {
         setWordData(null);
         setError(err);
+        return { success: false, error: err };
       } finally {
         setLoading(false);
       }
@@ -72,15 +66,13 @@ export function DictionaryProvider({ children }) {
     [addToHistory]
   );
 
-  /** Clear the current error message */
+  // Clear any existing error messages
   const clearError = useCallback(() => setError(null), []);
 
-  /** Go back to home screen (hide word detail view) */
+// Clear the currently displayed word data (used when going back to home screen)
   const clearWord = useCallback(() => setWordData(null), []);
 
-  /**
-   * Clear all search history and cached word data.
-   */
+ // Clear search history and cached word data (used on History screen)
   const clearHistory = useCallback(() => {
     setSearchHistory([]);
     setWordCache({});
@@ -105,10 +97,7 @@ export function DictionaryProvider({ children }) {
   );
 }
 
-/**
- * Custom hook — use inside any component to access dictionary state.
- * Example: const { searchWord, wordData } = useDictionary();
- */
+// Custom hook to access dictionary context values and functions in any component
 export function useDictionary() {
   const context = useContext(DictionaryContext);
 

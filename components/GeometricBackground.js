@@ -1,19 +1,18 @@
-// ============================================================
-// Geometric Background — decorative shapes from reference design
-// Yellow circles and orange accents on navy background
-// ============================================================
 
-import React from 'react';
+// Geometric Background 
+
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { useResponsive } from '../constants/responsive';
 
 export default function GeometricBackground({ variant = 'home' }) {
-  const { scale, width } = useResponsive();
+  const { colors } = useTheme();
+  const { scale } = useResponsive();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* Yellow circle — top right (reference design) */}
       <View
         style={[
           styles.yellowCircle,
@@ -25,7 +24,6 @@ export default function GeometricBackground({ variant = 'home' }) {
           },
         ]}
       />
-      {/* Orange triangle-like block — bottom left */}
       <View
         style={[
           styles.orangeBlock,
@@ -38,7 +36,7 @@ export default function GeometricBackground({ variant = 'home' }) {
           },
         ]}
       />
-      {/* Small yellow accent — detail screen only */}
+
       {variant === 'detail' ? (
         <View
           style={[
@@ -56,23 +54,25 @@ export default function GeometricBackground({ variant = 'home' }) {
   );
 }
 
-const styles = StyleSheet.create({
-  yellowCircle: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: colors.yellow,
-    opacity: 0.25,
-  },
-  orangeBlock: {
-    position: 'absolute',
-    backgroundColor: colors.secondary,
-    opacity: 0.2,
-    borderRadius: 8,
-  },
-  yellowSmall: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: colors.yellow,
-    opacity: 0.2,
-  },
-});
+function createStyles(colors) {
+  return StyleSheet.create({
+    yellowCircle: {
+      position: 'absolute',
+      borderRadius: 999,
+      backgroundColor: colors.yellow,
+      opacity: 0.25,
+    },
+    orangeBlock: {
+      position: 'absolute',
+      backgroundColor: colors.secondary,
+      opacity: 0.2,
+      borderRadius: 8,
+    },
+    yellowSmall: {
+      position: 'absolute',
+      borderRadius: 999,
+      backgroundColor: colors.yellow,
+      opacity: 0.2,
+    },
+  });
+}

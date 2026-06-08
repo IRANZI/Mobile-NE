@@ -1,12 +1,9 @@
-// ============================================================
-// Typography — serif for word titles, sans-serif for body text
-// Uses platform-native fonts (works on Android and iOS)
-// ============================================================
+// Typography Constants
 
 import { Platform } from 'react-native';
 
 export const fonts = {
-  // Large word display (like "Besuch" / "Hebamme" in the reference)
+  // Large word display 
   serif: Platform.select({
     ios: 'Georgia',
     android: 'serif',

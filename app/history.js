@@ -1,7 +1,4 @@
-// ============================================================
-// History Screen — full list of searched words
-// Tap a word to look it up again; clear all history button
-// ============================================================
+// History.js - Displays the user's search history with options to revisit or clear entries.
 
 import React, { useMemo } from 'react';
 import {
@@ -16,16 +13,17 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDictionary } from '../context/DictionaryContext';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 export default function HistoryScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { searchHistory, wordCache, searchWord, clearHistory, loading } = useDictionary();
   const { scale } = useResponsive();
-  const styles = useMemo(() => createStyles(scale), [scale]);
+  const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
 
   // Confirm before wiping all history
   const handleClearHistory = () => {
@@ -128,7 +126,7 @@ export default function HistoryScreen() {
             onPress={() => router.push('/')}
             activeOpacity={0.85}
           >
-            <Ionicons name="search" size={scale(18)} color={colors.white} />
+            <Ionicons name="search" size={scale(18)} color={colors.iconOnPrimary} />
             <Text style={styles.goSearchText}>Go to Search</Text>
           </TouchableOpacity>
         </View>
@@ -145,7 +143,7 @@ export default function HistoryScreen() {
   );
 }
 
-function createStyles(scale) {
+function createStyles(scale, colors) {
   return StyleSheet.create({
     screen: {
       flex: 1,
@@ -293,7 +291,7 @@ function createStyles(scale) {
       fontFamily: fonts.sans,
       fontSize: scale(16),
       fontWeight: '700',
-      color: colors.white,
+      color: colors.iconOnPrimary,
     },
   });
 }

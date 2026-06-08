@@ -1,8 +1,4 @@
-// ============================================================
-// Recent Words — horizontal scrolling list (reference design)
-// Shows previously searched words as dark muted cards
-// ============================================================
-
+// Recent Words Scroll
 import React, { useMemo } from 'react';
 import {
   ScrollView,
@@ -13,14 +9,15 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../constants/colors';
+import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
 import { useResponsive } from '../constants/responsive';
 
 export default function RecentWordsScroll({ history, wordCache, onWordPress }) {
+  const { colors } = useTheme();
   const router = useRouter();
   const { scale } = useResponsive();
-  const styles = useMemo(() => createStyles(scale), [scale]);
+  const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
 
   if (!history || history.length === 0) {
     return null;
@@ -80,7 +77,7 @@ export default function RecentWordsScroll({ history, wordCache, onWordPress }) {
   );
 }
 
-function createStyles(scale) {
+function createStyles(scale, colors) {
   return StyleSheet.create({
     section: {
       marginBottom: scale(24),
