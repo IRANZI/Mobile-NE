@@ -1,6 +1,5 @@
 // User-friendly search input validation
 
-const MIN_LENGTH = 2;
 const MAX_LENGTH = 45;
 const WORD_PATTERN = /^[a-zA-Z]+(?:[-'][a-zA-Z]+)*$/;
 
@@ -18,17 +17,7 @@ export function validateSearchQuery(input) {
       type: 'validation',
       title: 'Almost there',
       message: 'Please type a word in the search box.',
-      hint: 'Try searching for "hello" or "world".',
-    };
-  }
-
-  if (trimmed.length < MIN_LENGTH) {
-    return {
-      valid: false,
-      type: 'validation',
-      title: 'Too short',
-      message: 'Please enter at least 2 letters.',
-      hint: 'Single-letter searches are not supported.',
+      hint: 'Try searching for "a", "hello", or "world".',
     };
   }
 
