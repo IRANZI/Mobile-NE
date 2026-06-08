@@ -9,7 +9,8 @@ import { Drawer } from 'expo-router/drawer';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { DictionaryProvider, useDictionary } from '../context/DictionaryContext';
 import { ThemeProvider, useTheme } from '../context/ThemeContext';
@@ -20,10 +21,23 @@ import AppSplash from '../components/AppSplash';
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function CustomDrawerContent(props) {
-  const { searchHistory } = useDictionary();
+  const router = useRouter();
+  const { searchHistory, searchWord, loading, wordData, removeFromHistory } = useDictionary();
   const { colors } = useTheme();
   const { scale, drawerWidth } = useResponsive();
   const styles = useMemo(() => createDrawerStyles(scale, colors), [scale, colors]);
+
+  const handleHistoryPress = (word) => {
+    props.navigation.closeDrawer();
+    router.push('/');
+    searchWord(word);
+  };
+
+  const handleRemoveHistory = (word) => {
+    removeFromHistory(word);
+  };
+
+  const activeWord = wordData?.word?.toLowerCase();
 
   return (
     <DrawerContentScrollView
@@ -46,11 +60,55 @@ function CustomDrawerContent(props) {
         <DrawerItemList {...props} />
       </View>
 
-      <View style={styles.statsBox}>
-        <Ionicons name="time-outline" size={scale(20)} color={colors.secondary} />
-        <Text style={styles.statsText}>
-          {searchHistory.length} word{searchHistory.length !== 1 ? 's' : ''} in history
+      <View style={styles.historySection}>
+        <Text style={styles.sectionLabel}>
+          Recent Searches {searchHistory.length > 0 ? `(${searchHistory.length})` : ''}
         </Text>
+
+        {searchHistory.length === 0 ? (
+          <View style={styles.emptyHistory}>
+            <Ionicons name="search-outline" size={scale(22)} color={colors.drawerTextMuted} />
+            <Text style={styles.emptyHistoryText}>No searches yet</Text>
+          </View>
+        ) : (
+          searchHistory.map((word, index) => {
+            const isActive = activeWord === word.toLowerCase();
+
+            return (
+              <View
+                key={`${word}-${index}`}
+                style={[styles.historyItem, isActive && styles.historyItemActive]}
+              >
+                <TouchableOpacity
+                  style={styles.historyItemMain}
+                  onPress={() => handleHistoryPress(word)}
+                  disabled={loading}
+                  activeOpacity={0.75}
+                >
+                  <Ionicons
+                    name={isActive ? 'book' : 'text-outline'}
+                    size={scale(18)}
+                    color={isActive ? colors.iconOnPrimary : colors.secondary}
+                  />
+                  <Text
+                    style={[styles.historyWord, isActive && styles.historyWordActive]}
+                    numberOfLines={1}
+                  >
+                    {word}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleRemoveHistory(word)}
+                  style={styles.historyRemoveBtn}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityLabel={`Remove ${word} from history`}
+                >
+                  <Ionicons name="close-circle" size={scale(20)} color={colors.drawerTextMuted} />
+                </TouchableOpacity>
+              </View>
+            );
+          })
+        )}
       </View>
     </DrawerContentScrollView>
   );
@@ -211,23 +269,65 @@ function createDrawerStyles(scale, colors) {
       paddingHorizontal: scale(20),
       paddingVertical: scale(8),
     },
-    statsBox: {
+    historySection: {
+      marginTop: scale(4),
+      paddingHorizontal: scale(12),
+      paddingBottom: scale(16),
+    },
+    emptyHistory: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: scale(10),
-      marginHorizontal: scale(16),
-      marginTop: scale(8),
+      marginHorizontal: scale(4),
       padding: scale(16),
       backgroundColor: colors.drawerSurface,
       borderRadius: scale(14),
       borderWidth: 1,
       borderColor: colors.border,
     },
-    statsText: {
+    emptyHistoryText: {
       fontFamily: fonts.sans,
       fontSize: scale(14),
       color: colors.drawerTextMuted,
+    },
+    historyItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: scale(6),
+      borderRadius: scale(12),
+      backgroundColor: colors.drawerSurface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    historyItemMain: {
       flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: scale(10),
+      paddingVertical: scale(12),
+      paddingLeft: scale(14),
+      paddingRight: scale(8),
+    },
+    historyRemoveBtn: {
+      paddingVertical: scale(12),
+      paddingRight: scale(14),
+      paddingLeft: scale(4),
+    },
+    historyItemActive: {
+      backgroundColor: colors.secondary + '44',
+      borderColor: colors.secondary,
+    },
+    historyWord: {
+      flex: 1,
+      fontFamily: fonts.sans,
+      fontSize: scale(15),
+      fontWeight: '600',
+      color: colors.drawerText,
+      textTransform: 'capitalize',
+    },
+    historyWordActive: {
+      fontWeight: '800',
     },
   });
 }

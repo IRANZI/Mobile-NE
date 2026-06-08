@@ -1,7 +1,7 @@
 // Error Message Component
 
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { fonts } from '../constants/typography';
@@ -34,7 +34,7 @@ const ERROR_META = {
   },
 };
 
-export default function ErrorMessage({ error }) {
+export default function ErrorMessage({ error, onRetry, retryLabel = 'Try again' }) {
   const { colors } = useTheme();
   const { scale } = useResponsive();
   const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
@@ -43,6 +43,7 @@ export default function ErrorMessage({ error }) {
 
   const meta = ERROR_META[error.type] || ERROR_META.unknown;
   const title = error.title || meta.defaultTitle;
+  const showRetry = Boolean(onRetry && error.type !== 'validation');
 
   return (
     <View style={styles.container} accessibilityRole="alert">
@@ -51,6 +52,18 @@ export default function ErrorMessage({ error }) {
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{error.message}</Text>
         {error.hint ? <Text style={styles.hint}>{error.hint}</Text> : null}
+        {showRetry ? (
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={onRetry}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={retryLabel}
+          >
+            <Ionicons name="refresh" size={scale(16)} color={colors.iconOnPrimary} />
+            <Text style={styles.retryText}>{retryLabel}</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </View>
   );
@@ -89,6 +102,23 @@ function createStyles(scale, colors) {
       color: colors.textGrey,
       marginTop: scale(6),
       lineHeight: scale(18),
+    },
+    retryBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: scale(6),
+      marginTop: scale(12),
+      backgroundColor: colors.secondary,
+      paddingHorizontal: scale(16),
+      paddingVertical: scale(10),
+      borderRadius: scale(12),
+    },
+    retryText: {
+      fontFamily: fonts.sans,
+      fontSize: scale(14),
+      fontWeight: '700',
+      color: colors.iconOnPrimary,
     },
   });
 }

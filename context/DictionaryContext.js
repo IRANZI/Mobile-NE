@@ -27,6 +27,8 @@ export function DictionaryProvider({ children }) {
   const [error, setError] = useState(null);
   const [searchHistory, setSearchHistory] = useState([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [activeSearchWord, setActiveSearchWord] = useState(null);
+  const [lastFailedWord, setLastFailedWord] = useState(null);
 
   // Restore search history when the app starts or is refreshed
   useEffect(() => {
@@ -91,18 +93,24 @@ export function DictionaryProvider({ children }) {
 
       const trimmed = validation.word;
 
+      setActiveSearchWord(trimmed);
+      setWordData(null);
       setLoading(true);
       setError(null);
+      setLastFailedWord(null);
 
       try {
         const data = await fetchWordDefinition(trimmed);
         setWordData(data);
         setWordCache((prev) => ({ ...prev, [trimmed.toLowerCase()]: data }));
         addToHistory(trimmed);
+        setActiveSearchWord(null);
         return { success: true, data };
       } catch (err) {
         setWordData(null);
-        setError(err);
+        setActiveSearchWord(null);
+        setLastFailedWord(trimmed);
+        setError({ ...err, failedWord: trimmed });
         return { success: false, error: err };
       } finally {
         setLoading(false);
@@ -115,7 +123,16 @@ export function DictionaryProvider({ children }) {
   const clearError = useCallback(() => setError(null), []);
 
 // Clear the currently displayed word data (used when going back to home screen)
-  const clearWord = useCallback(() => setWordData(null), []);
+  const clearWord = useCallback(() => {
+    setWordData(null);
+    setActiveSearchWord(null);
+  }, []);
+
+  const retryLastSearch = useCallback(() => {
+    if (lastFailedWord) {
+      searchWord(lastFailedWord);
+    }
+  }, [lastFailedWord, searchWord]);
 
  // Clear search history and cached word data (used on History screen)
   const clearHistory = useCallback(() => {
@@ -124,16 +141,32 @@ export function DictionaryProvider({ children }) {
     AsyncStorage.removeItem(HISTORY_STORAGE_KEY).catch(() => {});
   }, []);
 
+  const removeFromHistory = useCallback((word) => {
+    const lower = word.trim().toLowerCase();
+    if (!lower) return;
+
+    setSearchHistory((prev) => prev.filter((item) => item.toLowerCase() !== lower));
+    setWordCache((prev) => {
+      const next = { ...prev };
+      delete next[lower];
+      return next;
+    });
+  }, []);
+
   const value = {
     wordData,
     wordCache,
     loading,
     error,
     searchHistory,
+    activeSearchWord,
+    lastFailedWord,
     searchWord,
+    retryLastSearch,
     clearError,
     clearWord,
     clearHistory,
+    removeFromHistory,
   };
 
   return (

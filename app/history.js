@@ -21,7 +21,8 @@ export default function HistoryScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { searchHistory, wordCache, searchWord, clearHistory, loading } = useDictionary();
+  const { searchHistory, wordCache, searchWord, clearHistory, removeFromHistory, loading } =
+    useDictionary();
   const { scale } = useResponsive();
   const styles = useMemo(() => createStyles(scale, colors), [scale, colors]);
 
@@ -43,10 +44,24 @@ export default function HistoryScreen() {
     );
   };
 
-  // Search the word and go back to the main dictionary screen
   const handleWordPress = (word) => {
     router.push('/');
     searchWord(word);
+  };
+
+  const handleRemoveWord = (word) => {
+    Alert.alert(
+      'Remove from history',
+      `Remove "${word}" from your search history?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeFromHistory(word),
+        },
+      ]
+    );
   };
 
   const renderItem = ({ item, index }) => {
@@ -58,34 +73,44 @@ export default function HistoryScreen() {
     const partOfSpeech = cached?.meanings?.[0]?.partOfSpeech || '';
 
     return (
-      <TouchableOpacity
-        style={styles.historyCard}
-        onPress={() => handleWordPress(item)}
-        activeOpacity={0.8}
-        disabled={loading}
-      >
-        <View style={styles.cardLeft}>
-          <View style={styles.numberBadge}>
-            <Text style={styles.numberText}>{index + 1}</Text>
+      <View style={styles.historyCard}>
+        <TouchableOpacity
+          style={styles.cardPressable}
+          onPress={() => handleWordPress(item)}
+          activeOpacity={0.8}
+          disabled={loading}
+        >
+          <View style={styles.cardLeft}>
+            <View style={styles.numberBadge}>
+              <Text style={styles.numberText}>{index + 1}</Text>
+            </View>
+            <View style={styles.cardContent}>
+              <Text style={styles.word}>{item}</Text>
+              {phonetic || partOfSpeech ? (
+                <Text style={styles.meta} numberOfLines={1}>
+                  {phonetic}
+                  {phonetic && partOfSpeech ? ' · ' : ''}
+                  {partOfSpeech}
+                </Text>
+              ) : null}
+              {snippet ? (
+                <Text style={styles.snippet} numberOfLines={2}>
+                  {snippet}
+                </Text>
+              ) : null}
+            </View>
           </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.word}>{item}</Text>
-            {phonetic || partOfSpeech ? (
-              <Text style={styles.meta} numberOfLines={1}>
-                {phonetic}
-                {phonetic && partOfSpeech ? ' · ' : ''}
-                {partOfSpeech}
-              </Text>
-            ) : null}
-            {snippet ? (
-              <Text style={styles.snippet} numberOfLines={2}>
-                {snippet}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={scale(20)} color={colors.textMuted} />
-      </TouchableOpacity>
+          <Ionicons name="chevron-forward" size={scale(20)} color={colors.textMuted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.removeBtn}
+          onPress={() => handleRemoveWord(item)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={`Remove ${item} from history`}
+        >
+          <Ionicons name="trash-outline" size={scale(18)} color={colors.danger} />
+        </TouchableOpacity>
+      </View>
     );
   };
 
@@ -196,10 +221,23 @@ function createStyles(scale, colors) {
       alignItems: 'center',
       backgroundColor: colors.cardBg,
       borderRadius: scale(16),
-      padding: scale(16),
       marginBottom: scale(10),
       borderWidth: 1,
       borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    cardPressable: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: scale(16),
+      paddingRight: scale(8),
+    },
+    removeBtn: {
+      paddingHorizontal: scale(14),
+      paddingVertical: scale(16),
+      borderLeftWidth: 1,
+      borderLeftColor: colors.border,
     },
     cardLeft: {
       flex: 1,

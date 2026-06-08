@@ -14,8 +14,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDictionary } from '../context/DictionaryContext';
 import HomeHeader from '../components/HomeHeader';
 import SearchBar from '../components/SearchBar';
+import SearchSuggestions from '../components/SearchSuggestions';
 import RecentWordsScroll from '../components/RecentWordsScroll';
 import WordHero from '../components/WordHero';
+import WordHeroLoading from '../components/WordHeroLoading';
 import DefinitionCard from '../components/DefinitionCard';
 import ErrorMessage from '../components/ErrorMessage';
 import LoadingImage from '../components/LoadingImage';
@@ -31,7 +33,9 @@ export default function SearchScreen() {
     loading,
     error,
     searchHistory,
+    activeSearchWord,
     searchWord,
+    retryLastSearch,
     clearError,
     clearWord,
   } = useDictionary();
@@ -47,22 +51,23 @@ export default function SearchScreen() {
     [scale, horizontalPad, contentMaxWidth, colors]
   );
 
-  // True when showing word detail (left phone in reference design)
-  const isDetailView = Boolean(wordData && !loading);
+  const isFetchingDetail = Boolean(loading && activeSearchWord);
+  const isDetailView = Boolean(wordData && !loading) || isFetchingDetail;
 
-  const handleSearch = () => {
+  const handleSearch = (wordOverride) => {
     Keyboard.dismiss();
     clearError();
 
-    const validation = validateSearchQuery(searchText);
+    const query = typeof wordOverride === 'string' ? wordOverride : searchText;
+    const validation = validateSearchQuery(query);
     if (!validation.valid) {
       setValidationError(validation);
       return;
     }
 
     setValidationError(null);
+    setSearchText(validation.word);
     searchWord(validation.word);
-    setSearchText('');
   };
 
   const handleChangeText = (text) => {
@@ -70,6 +75,22 @@ export default function SearchScreen() {
     if (validationError) setValidationError(null);
     if (error?.type === 'validation') clearError();
   };
+
+  const handleSuggestionSelect = (word) => {
+    setSearchText(word);
+    setValidationError(null);
+    clearError();
+    handleSearch(word);
+  };
+
+  const handleRecentPress = (word) => {
+    setSearchText(word);
+    setValidationError(null);
+    clearError();
+    searchWord(word);
+  };
+
+  const showSuggestions = !loading && searchText.trim().length > 0;
 
   const apiError = error && error.type !== 'validation' ? error : null;
 
@@ -82,26 +103,35 @@ export default function SearchScreen() {
       {/* ─── DETAIL VIEW: word header + white definition sheet ─── */}
       {isDetailView ? (
         <View style={styles.detailContainer}>
-          <WordHero wordData={wordData} onBack={clearWord} />
+          {isFetchingDetail ? (
+            <WordHeroLoading word={activeSearchWord} onBack={clearWord} />
+          ) : (
+            <WordHero wordData={wordData} onBack={clearWord} />
+          )}
 
-          {/* White bottom sheet with rounded top corners */}
           <View style={styles.definitionSheet}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={[
-                styles.sheetContent,
-                { paddingBottom: Math.max(insets.bottom, scale(24)) + scale(16) },
-              ]}
-              keyboardShouldPersistTaps="handled"
-            >
-              {wordData.meanings?.length > 0 ? (
-                wordData.meanings.map((meaning, index) => (
-                  <DefinitionCard key={`meaning-${index}`} meaning={meaning} index={index} />
-                ))
-              ) : (
-                <Text style={styles.noMeanings}>No meanings found.</Text>
-              )}
-            </ScrollView>
+            {isFetchingDetail ? (
+              <View style={styles.sheetLoading}>
+                <LoadingImage message="Loading definition..." />
+              </View>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[
+                  styles.sheetContent,
+                  { paddingBottom: Math.max(insets.bottom, scale(24)) + scale(16) },
+                ]}
+                keyboardShouldPersistTaps="handled"
+              >
+                {wordData.meanings?.length > 0 ? (
+                  wordData.meanings.map((meaning, index) => (
+                    <DefinitionCard key={`meaning-${index}`} meaning={meaning} index={index} />
+                  ))
+                ) : (
+                  <Text style={styles.noMeanings}>No meanings found.</Text>
+                )}
+              </ScrollView>
+            )}
           </View>
         </View>
       ) : (
@@ -123,9 +153,16 @@ export default function SearchScreen() {
             <SearchBar
               value={searchText}
               onChangeText={handleChangeText}
-              onSubmit={handleSearch}
+              onSubmit={() => handleSearch()}
               loading={loading}
               validationError={validationError}
+            />
+
+            <SearchSuggestions
+              query={searchText}
+              history={searchHistory}
+              visible={showSuggestions}
+              onSelect={handleSuggestionSelect}
             />
 
             {/* Loading spinner while fetching from API */}
@@ -134,14 +171,24 @@ export default function SearchScreen() {
             ) : null}
 
             {/* Error message (404, network, etc.) */}
-            {apiError ? <ErrorMessage error={apiError} /> : null}
+            {apiError ? (
+              <ErrorMessage
+                error={apiError}
+                onRetry={retryLastSearch}
+                retryLabel={
+                  apiError.failedWord
+                    ? `Retry "${apiError.failedWord}"`
+                    : 'Try again'
+                }
+              />
+            ) : null}
 
             {/* Horizontal recent words scroll */}
             {!loading ? (
               <RecentWordsScroll
                 history={searchHistory}
                 wordCache={wordCache}
-                onWordPress={searchWord}
+                onWordPress={handleRecentPress}
               />
             ) : null}
           </View>
@@ -188,6 +235,12 @@ function createStyles(scale, horizontalPad, contentMaxWidth, colors) {
     sheetContent: {
       padding: scale(20),
       paddingTop: scale(24),
+    },
+    sheetLoading: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: scale(40),
     },
     noMeanings: {
       fontFamily: fonts.sans,
