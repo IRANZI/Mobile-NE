@@ -1,8 +1,18 @@
 // Dictionary Context
 
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchWordDefinition } from '../services/dictionaryApi';
 import { validateSearchQuery } from '../utils/validateSearch';
+
+const HISTORY_STORAGE_KEY = '@lexitech_search_history';
+const MAX_HISTORY = 25;
 
 // Create React Context to share data across all screens
 const DictionaryContext = createContext(null);
@@ -16,6 +26,41 @@ export function DictionaryProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  // Restore search history when the app starts or is refreshed
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        const saved = await AsyncStorage.getItem(HISTORY_STORAGE_KEY);
+        if (!saved) return;
+
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed)) return;
+
+        const words = parsed
+          .filter((item) => typeof item === 'string' && item.trim())
+          .slice(0, MAX_HISTORY);
+
+        setSearchHistory(words);
+      } catch {
+        // Corrupt storage — start with an empty history
+      } finally {
+        setHistoryLoaded(true);
+      }
+    }
+
+    loadHistory();
+  }, []);
+
+  // Persist history whenever it changes (after initial load)
+  useEffect(() => {
+    if (!historyLoaded) return;
+
+    AsyncStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(searchHistory)).catch(
+      () => {}
+    );
+  }, [searchHistory, historyLoaded]);
 
  // Add a word to the search history, ensuring no duplicates and max length of 25
   const addToHistory = useCallback((word) => {
@@ -25,7 +70,7 @@ export function DictionaryProvider({ children }) {
     setSearchHistory((prev) => {
       const lower = trimmed.toLowerCase();
       const withoutDuplicate = prev.filter((item) => item.toLowerCase() !== lower);
-      return [trimmed, ...withoutDuplicate].slice(0, 25);
+      return [trimmed, ...withoutDuplicate].slice(0, MAX_HISTORY);
     });
   }, []);
 
@@ -76,6 +121,7 @@ export function DictionaryProvider({ children }) {
   const clearHistory = useCallback(() => {
     setSearchHistory([]);
     setWordCache({});
+    AsyncStorage.removeItem(HISTORY_STORAGE_KEY).catch(() => {});
   }, []);
 
   const value = {
